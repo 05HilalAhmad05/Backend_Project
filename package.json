@@ -1,0 +1,20 @@
+{
+  "name": "06-backendproject",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "node",
+    "chai",
+    "index.js"
+  ],
+  "author": "Hilal Ahmad",
+  "license": "ISC",
+  "dependencies": {
+    "index.js": "^0.0.3",
+    "nodemon": "^3.1.14"
+  }
+}
