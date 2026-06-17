@@ -1,6 +1,8 @@
-import dotenv from 'dotenv'
+// import dotenv from 'dotenv'
+// dotenv.config(); this dot env is replace with -r dotenv/config in package.json file to load env variables before running the app
+import app from "./app.js"
 
-dotenv.config();
+
 import connectDB from "./db/connection.js";
 
 
