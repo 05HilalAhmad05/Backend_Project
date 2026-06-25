@@ -17,6 +17,7 @@ const generateAcessandRefreshTokens = async (userId) => {
 
       return { accessToken, refreshToken }
    } catch (error) {
+     
       throw new ApiError(500, "something went wrong while generating access and refresh tokens")
    }
 }
@@ -113,24 +114,24 @@ const loginUser = asyncHandler(async (req, res) => {
       throw new ApiError(404, "User does not exist")
    }
 
-   const isPasswordValid = await User.isPasswordCorrect(password)
+   const isPasswordValid = await user.isPasswordCorrect(password)
 
    if (!isPasswordValid) {
       throw new ApiError(401, 'Invalid password')
    }
     
-   const {accessToken, refreshToken} = await generateAcessandRefreshTokens(user.id)
-   const loggedInUser = await User.findById(user.id).select("-password -refreshToken")
+   const {accessToken, refreshToken} = await generateAcessandRefreshTokens(user._id)
+   const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
    const options = {
       httpOnly: true,
-      secure: true
+      secure: false, // set to true in production
    }
 
    return res.
    status(200)
-   .cookies("Access Token", accessToken, options)
-   .cookies("Refresh Token", refreshToken, options)
+   .cookie("accessToken", accessToken, options)
+   .cookie("refreshToken", refreshToken, options)
    .json(
       new ApiResponse(
          200,
@@ -158,18 +159,63 @@ const logoutUser = asyncHandler( async(req, res) => {
 
    const options = {
       httpOnly: true,// it means that the cookie can only be accessed by the server and not by client-side JavaScript, which helps to prevent cross-site scripting (XSS) attacks
-      secure: true // it means that the cookie will only be sent over secure HTTPS connections, which helps to protect the cookie from being intercepted by attackers during transmission
+      secure: false
    }
 
    return res // it means that the response will have a status code of 200 (OK), and it will clear the "Access Token" from the client's cookies using the specified options, and it will also clear the "Refresh Token" from the client's cookies using the same options. Finally, it will send a JSON response with a message indicating that the user has been logged out successfully
 
-   
+
    .status(200)
-   .clearCookie("Access Token", options)
-   .clearCookie("Refresh Token", options)
+   .clearCookie("accessToken", options)
+   .clearCookie("refreshToken", options)
    .json(
       new ApiResponse(200, {}, "User logged out successfully")
    )
 })
 
-export { registerUser, loginUser , logoutUser}
+const refreshAccessToken = asyncHandler(async(req, res) =>{
+   const incomingRefreshToken = req.body.refreshToken || req.body.refreshToken
+
+   if(!incomingRefreshToken){
+      throw new ApiError(401, "Unauthorized Request")
+   }
+
+  try {
+    const decodedToken = jwt.verify(
+       incomingRefreshToken,
+       process.env.REFRESH_TOKEN_SECRET
+    )
+ 
+    const user = await User.findById(decodedToken?._id)
+ 
+    if(!user){
+       throw new ApiError(401, "Invalid refresh Token")
+    }
+ 
+    if(incomingRefreshToken !== user?.refreshToken){
+       throw new ApiError(401, "Refresh token is expired or used")
+    }
+ 
+    const options = {
+       httpOnly: true,
+       secure: false
+    }
+ 
+    const {accessToken, newrefreshToken} = await generateAcessandRefreshTokens(user._id)
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", newrefreshToken, options)
+    .json(
+       new ApiResponse(
+            200, 
+                 {accessToken, refreshToken: newRefreshToken},
+                 "Access token refreshed"
+       )
+    )
+  } catch (error) {
+   throw new ApiError(401, error?.message || "Invalid refresh Token")
+  }
+})
+
+export { registerUser, loginUser , logoutUser, refreshAccessToken}

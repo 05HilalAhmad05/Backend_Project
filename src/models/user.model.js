@@ -45,6 +45,10 @@ const userSchema = new mongoose.Schema({
 
 }, 
 {timestamps: true})
+// AFTER generateRefreshToken, BEFORE the export
+userSchema.methods.isPasswordCorrect = async function(password) {
+    return await bcrypt.compare(password, this.password)
+}
 
 userSchema.pre("save", async function() {
     if(!this.isModified("password")) return;
@@ -54,14 +58,14 @@ userSchema.pre("save", async function() {
 userSchema.methods.generateAccessToken = function() {
     return jwt.sign(
         {
-            id: this._id,
+            _id: this._id,
             email: this.email,
             username: this.username,
             fullName: this.fullName,
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRES,
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
         }
     )
 }
@@ -69,11 +73,11 @@ userSchema.methods.generateAccessToken = function() {
 userSchema.methods.generateRefreshToken = function() {
     return jwt.sign(
         {
-            id: this._id,
+            _id: this._id,
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRES,
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
         }
     )
 }
