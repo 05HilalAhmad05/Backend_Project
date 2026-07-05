@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import mongoose from "mongoose"
 import jwt from "jsonwebtoken"
+import { deleteFromCloudinary } from '../utils/cloudinary.js';
 
 const generateAcessandRefreshTokens = async (userId) => {
    try {
@@ -276,6 +277,9 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Avatar file is missing")
    }
 
+   const existingAvatar = await User.findById(req.user?._id)
+   const oldAvatarUrl = existingAvatar?.avatar
+
    const avatar = await uploadOnCloudinary(avatarLocalPath)
 
    if (!avatar.url) {
@@ -291,6 +295,11 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
       },
       { new: true }
    ).select("-password")
+   
+   // Delete the old avatar from Cloudinary if it exists
+   if (oldAvatarUrl) {
+      await deleteFromCloudinary(oldAvatarUrl)
+   }
 
    return res
       .status(200)
@@ -304,6 +313,9 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
    if (!coverImageLocalPath) {
       throw new ApiError(400, "Cover image file is missing")
    }
+
+   const existingCoverImage = await User.findById(req.user?._id)
+   const oldCoverImageUrl = existingCoverImage?.coverImage
 
    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
@@ -320,6 +332,10 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
       },
       { new: true }
    ).select("-password")
+
+   if (oldCoverImageUrl) {
+      await deleteFromCloudinary(oldCoverImageUrl)
+   }
 
    return res
       .status(200)
@@ -402,6 +418,61 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
 })
 
+const getWatchHistory = asyncHandler(async (req, res) => {
+   const user = await User.aggregate([
+      {
+         $match: {
+            _id: new mongoose.Types.ObjectId(req.user?._id) // it means that the user document with the specified _id will be matched in the aggregation pipeline
+         }
+      },
+      {
+         $lookup: {
+            from: "videos", // it means that the aggregation pipeline will look up documents from the "videos" collection
+            localField: "watchHistory",
+            foreignField: "_id",
+            as: "watchedVideos",
+            pipeline: [
+              {
+                 $lookup: {
+                  from: "users",
+                  localField: "owner",
+                  foreignField: "_id",
+                  as: "owner",
+                   pipeline: [
+                     {
+                        $project: {
+                           fullName: 1,
+                           username: 1,
+                           avatar: 1
+                        }
+                     }
+                   ]
+                 }
+              },
+              {
+                $addFields: {
+                  owner: {
+                     $first: "$owner"
+                  }
+                }
+              }
+            ]
+         }
+      }
+   ])
+   return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory,
+            "Watch history fetched successfully"
+        )
+    )
+})
+
+ 
+
 export {
    registerUser,
    loginUser,
@@ -411,5 +482,7 @@ export {
    ChangeCurrentPassword,
    getCurrentUser,
    updateUserAvatar,
-   updateUserCoverImage
+   updateUserCoverImage,
+   getWatchHistory,
+   getUserChannelProfile
 }
