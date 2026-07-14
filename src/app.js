@@ -35,5 +35,6 @@ app.use("/api/v1/playlists", playlistRouter)
 app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/health", healthcheckRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
+app.use("/api/v1/comment", commentRouter)
 
 export default app;
