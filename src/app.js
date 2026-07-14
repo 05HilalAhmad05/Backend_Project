@@ -22,6 +22,9 @@ import tweetRouter from "./routes/tweet.router.js";
 import subscriptionRouter from "./routes/subscription.router.js";
 import playlistRouter from "./routes/playlist.router.js";
 import likeRouter from "./routes/like.router.js"
+import healthcheckRouter from "./routes/healthcheck.router.js"
+import dashboardRouter from "./routes/dashboard.router.js"
+import commentRouter from "./routes/comment.router.js"
 
 //routes declaration
 app.use("/api/v1/user", userRouter)
@@ -30,4 +33,7 @@ app.use("/api/v1/tweets", tweetRouter)
 app.use("/api/v1/subscriptions", subscriptionRouter)
 app.use("/api/v1/playlists", playlistRouter)
 app.use("/api/v1/likes", likeRouter)
+app.use("/api/v1/health", healthcheckRouter)
+app.use("/api/v1/dashboard", dashboardRouter)
+
 export default app;
