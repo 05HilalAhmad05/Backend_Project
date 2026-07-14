@@ -9,16 +9,20 @@ app.use(cors({
     credentials: true,
 }))
 
-app.use(express.json({limit: "18kb"}));
-app.use(express.urlencoded({extended: true, limit: "18kb"}))
+app.use(express.json({ limit: "18kb" }));
+app.use(express.urlencoded({ extended: true, limit: "18kb" }))
 app.use(express.static("public"))
 app.use(cookieParser())
 
 
 //Routing work importing
 import userRouter from "./routes/user.router.js";
+import videoRouter from "./routes/video.router.js";
+import tweetRouter from "./routes/tweet.router.js";
 
 //routes declaration
 app.use("/api/v1/user", userRouter)
+app.use("/api/v1/videos", videoRouter)
+app.use("/api/v1/tweets", tweetRouter)
 
 export default app;
