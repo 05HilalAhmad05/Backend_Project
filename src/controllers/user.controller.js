@@ -175,7 +175,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 })
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-   const incomingRefreshToken = req.body.refreshToken || req.body.refreshToken
+   const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
 
    if (!incomingRefreshToken) {
       throw new ApiError(401, "Unauthorized Request")
@@ -202,11 +202,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
          secure: false
       }
 
-      const { accessToken, newrefreshToken } = await generateAcessandRefreshTokens(user._id)
+      const { accessToken, newRefreshToken } = await generateAcessandRefreshTokens(user._id)
       return res
          .status(200)
          .cookie("accessToken", accessToken, options)
-         .cookie("refreshToken", newrefreshToken, options)
+         .cookie("refreshToken", newRefreshToken, options)
          .json(
             new ApiResponse(
                200,
@@ -345,7 +345,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 })
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
-   const { username } = req.params
+   const { username } = req.params // we took the username from the params because the route is defined as /c/:username, so the username will be available in req.params.username
 
    if (!username?.trim()) {
       throw new ApiError(400, "Username is missing")
