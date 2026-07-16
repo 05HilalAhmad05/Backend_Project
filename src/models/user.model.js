@@ -3,59 +3,59 @@ import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 
 const userSchema = new mongoose.Schema({
-   
-     username: {
+
+    username: {
         type: String,
         required: true,
         unique: true,
         index: true,
-        lowercase: true,    
+        lowercase: true,
         trim: true
-     },
-     email: {   
+    },
+    email: {
         type: String,
         required: true,
         unique: true,
         lowercase: true,
         trim: true
-     }, 
-     fullName: {
+    },
+    fullName: {
         type: String,
         required: true,
         trim: true,
         index: true
-     },
-     avatar: {
+    },
+    avatar: {
         type: String, // URL to the user's avatar image
         required: true,
-     },
-     coverImage: {
+    },
+    coverImage: {
         type: String, // URL to the user's cover image
-     },
-     password: {
+    },
+    password: {
         type: String,
         required: [true, 'Password is required'],
-     },
-     refreshToken: {
+    },
+    refreshToken: {
         type: String,
-     },
+    },
 
-        
-     
 
-}, 
-{timestamps: true})
+
+
+},
+    { timestamps: true })
 // AFTER generateRefreshToken, BEFORE the export
-userSchema.methods.isPasswordCorrect = async function(password) {
+userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
-userSchema.pre("save", async function() {
-    if(!this.isModified("password")) return;
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) return;
     this.password = await bcrypt.hash(this.password, 10);
 })
 
-userSchema.methods.generateAccessToken = function() {
+userSchema.methods.generateAccessToken = function () {
     return jwt.sign(
         {
             _id: this._id,
@@ -70,7 +70,7 @@ userSchema.methods.generateAccessToken = function() {
     )
 }
 
-userSchema.methods.generateRefreshToken = function() {
+userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
             _id: this._id,

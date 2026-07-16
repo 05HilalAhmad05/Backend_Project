@@ -25,7 +25,7 @@ const generateAcessandRefreshTokens = async (userId) => {
 
 
 const registerUser = asyncHandler(async (req, res) => {
-   // Get user detail from fronted
+   // Get user detail from fronted,
    //validation check if name or email is empty
    // Check if user is already esisted
    //check for images, for avtar 
@@ -295,7 +295,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
       },
       { new: true }
    ).select("-password")
-   
+
    // Delete the old avatar from Cloudinary if it exists
    if (oldAvatarUrl) {
       await deleteFromCloudinary(oldAvatarUrl)
@@ -432,46 +432,46 @@ const getWatchHistory = asyncHandler(async (req, res) => {
             foreignField: "_id",
             as: "watchedVideos",
             pipeline: [
-              {
-                 $lookup: {
-                  from: "users",
-                  localField: "owner",
-                  foreignField: "_id",
-                  as: "owner",
-                   pipeline: [
-                     {
-                        $project: {
-                           fullName: 1,
-                           username: 1,
-                           avatar: 1
+               {
+                  $lookup: {
+                     from: "users",
+                     localField: "owner",
+                     foreignField: "_id",
+                     as: "owner",
+                     pipeline: [
+                        {
+                           $project: {
+                              fullName: 1,
+                              username: 1,
+                              avatar: 1
+                           }
                         }
-                     }
-                   ]
-                 }
-              },
-              {
-                $addFields: {
-                  owner: {
-                     $first: "$owner"
+                     ]
                   }
-                }
-              }
+               },
+               {
+                  $addFields: {
+                     owner: {
+                        $first: "$owner"
+                     }
+                  }
+               }
             ]
          }
       }
    ])
    return res
-    .status(200)
-    .json(
-        new ApiResponse(
+      .status(200)
+      .json(
+         new ApiResponse(
             200,
             user[0].watchHistory,
             "Watch history fetched successfully"
-        )
-    )
+         )
+      )
 })
 
- 
+
 
 export {
    registerUser,
