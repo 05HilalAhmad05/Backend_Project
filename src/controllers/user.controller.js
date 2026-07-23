@@ -54,18 +54,18 @@ const registerUser = asyncHandler(async (req, res) => {
    const avatarLocalPath = req.files?.avatar?.[0]?.path // it means if there is a file in the avatar field, get the path of the first file, otherwise return undefined
    const coverImageLocalPath = req.files?.coverImage?.[0]?.path
 
-   if (!avatarLocalPath) {
-      throw new ApiError(400, "Avatar is required")
-   }
-
    console.log("req.files =", req.files)
    console.log("req.body =", req.body)
 
-   const avatar = await uploadOnCloudinary(avatarLocalPath,)
-   const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+   let avatar = null
+   let coverImage = null
 
-   if (!avatar) {
-      throw new ApiError(400, "avatar is required")
+   if (avatarLocalPath) {
+      avatar = await uploadOnCloudinary(avatarLocalPath)
+   }
+
+   if (coverImageLocalPath) {
+      coverImage = await uploadOnCloudinary(coverImageLocalPath)
    }
 
    const user = await User.create({
@@ -73,8 +73,8 @@ const registerUser = asyncHandler(async (req, res) => {
       email,
       username: username.toLowerCase(),
       password,
-      avatar: avatar.secure_url,
-      coverImage: coverImage?.url || ""
+      avatar: avatar?.secure_url || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y&s=200",
+      coverImage: coverImage?.secure_url || ""
 
    })
 
@@ -86,12 +86,24 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new ApiError(500, "User registration failed")
    }
 
-   return res.status(201).json(
-      new ApiResponse(200, createdUser, "User registered successfully")
-   )
+   const { accessToken, refreshToken } = await generateAcessandRefreshTokens(user._id)
 
+   const options = {
+      httpOnly: true,
+      secure: false,
+   }
 
-
+   return res
+      .status(201)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+         new ApiResponse(
+            201,
+            { user: createdUser, accessToken, refreshToken },
+            "User registered successfully"
+         )
+      )
 })
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -202,15 +214,15 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
          secure: false
       }
 
-      const { accessToken, newRefreshToken } = await generateAcessandRefreshTokens(user._id)
+      const { accessToken, refreshToken } = await generateAcessandRefreshTokens(user._id)
       return res
          .status(200)
          .cookie("accessToken", accessToken, options)
-         .cookie("refreshToken", newRefreshToken, options)
+         .cookie("refreshToken", refreshToken, options)
          .json(
             new ApiResponse(
                200,
-               { accessToken, refreshToken: newRefreshToken },
+               { accessToken, refreshToken },
                "Access token refreshed"
             )
          )
@@ -223,7 +235,7 @@ const ChangeCurrentPassword = asyncHandler(async (req, res) => {
    const { oldPassword, newPassword } = req.body
 
    const user = await User.findById(req.user?._id)
-   const isPasswordCorrect = user.isPasswordCorrect(oldPassword)
+   const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
 
    if (!isPasswordCorrect) {
       throw new ApiError(401, "Invalid old password")
@@ -465,7 +477,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
       .json(
          new ApiResponse(
             200,
-            user[0].watchHistory,
+            user[0]?.watchedVideos || [],
             "Watch history fetched successfully"
          )
       )

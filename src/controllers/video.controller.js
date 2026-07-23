@@ -180,6 +180,16 @@ const getVideoById = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not found")
     }
 
+    // Track views and watch history for the authenticated viewer
+    video.views = (video.views || 0) + 1
+    await video.save({ validateBeforeSave: false })
+
+    if (req.user?._id) {
+        await User.findByIdAndUpdate(req.user._id, {
+            $addToSet: { watchHistory: video._id },
+        })
+    }
+
     // 4. Return the video
     return res
         .status(200)

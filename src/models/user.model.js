@@ -39,10 +39,12 @@ const userSchema = new mongoose.Schema({
     refreshToken: {
         type: String,
     },
-
-
-
-
+    watchHistory: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Video",
+        },
+    ],
 },
     { timestamps: true })
 // AFTER generateRefreshToken, BEFORE the export

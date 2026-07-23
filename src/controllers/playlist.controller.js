@@ -82,7 +82,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Playlist not found")
     }
 
-    if (playlist.owner?._id.toString() !== req.user?._id.toString()) {
+    if (playlist.owner?.toString() !== req.user?._id.toString()) {
         throw new ApiError(401, "Unauthorized to add video to playlist")
     }
 
@@ -110,7 +110,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Playlist not found")
     }
 
-    if (playlist.owner?._id.toString() !== req.user?._id.toString()) {
+    if (playlist.owner?.toString() !== req.user?._id.toString()) {
         throw new ApiError(401, "Unauthorized to remove video from playlist")
     }
 
@@ -141,7 +141,7 @@ const deletePlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Playlist not found")
     }
 
-    if (playlist.owner?._id.toString() !== req.user?._id.toString()) {
+    if (playlist.owner?.toString() !== req.user?._id.toString()) {
         throw new ApiError(401, "Unauthorized to delete playlist")
     }
 
@@ -171,7 +171,7 @@ const updatePlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Playlist not found")
     }
 
-    if (playlist.owner?._id.toString() !== req.user?._id.toString()) {
+    if (playlist.owner?.toString() !== req.user?._id.toString()) {
         throw new ApiError(401, "Unauthorized to update playlist")
     }
 
@@ -183,8 +183,13 @@ const updatePlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Playlist description is required")
     }
 
-    playlist.name = name
-    playlist.description = description
+    if (name && name.trim() !== "") {
+        playlist.name = name.trim()
+    }
+
+    if (description && description.trim() !== "") {
+        playlist.description = description.trim()
+    }
 
     await playlist.save({ validateBeforeSave: false })
 

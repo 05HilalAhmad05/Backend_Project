@@ -3,9 +3,22 @@ const app = express();
 import cookieParser from "cookie-parser";
 import cors from "cors"
 
+const allowedOrigins = [
+    process.env.CORS_ORIGIN,
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+].filter((origin) => origin && origin !== '*')
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true)
+            return
+        }
+
+        callback(new Error('Not allowed by CORS'))
+    },
     credentials: true,
 }))
 
@@ -36,5 +49,15 @@ app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/health", healthcheckRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
 app.use("/api/v1/comment", commentRouter)
+
+app.use((err, req, res, next) => {
+    const statusCode = err.statusCode || 500
+    return res.status(statusCode).json({
+        success: false,
+        message: err.message || "Internal Server Error",
+        errors: err.errors || [],
+        data: null,
+    })
+})
 
 export default app;
